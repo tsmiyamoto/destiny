@@ -8,7 +8,7 @@ import sys
 if __name__ == "__main__":
 
     # 命式を作る（日干中心）
-    meishiki1 = Meishiki(sys.argv, 2)
+    meishiki1 = Meishiki(sys.argv, 2, "男性")
     meishiki1.build_meishiki()
     meishiki1.append_tsuhen()
     meishiki1.append_twelve_fortune()

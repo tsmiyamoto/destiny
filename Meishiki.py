@@ -13,49 +13,40 @@ class Meishiki:
     std_num = None
 
     meishiki = None
-    analysis = None
 
-    def __init__(self, args, std_num):
+    sex_dict = {"男性": 0, "女性": 1}
 
-        # 起動時の引数から生年月日・性別などのデータを構築する
+    def __init__(self, birthdate: dt, birthtime: dt, sex: str):
+        self.birthdate = birthdate
+        self.birthtime = birthtime
+        self.sex = self.sex_dict[sex]
 
-        try:
-            b = args[1]
-            t = args[2]
-            self.sex = int(args[3])
-            self.birthday = dt.strptime(b + " " + t, "%Y-%m-%d %H:%M")
+        if self.birthtime is not None:
             self.t_flag = True
-            # サマータイムを考慮する
-            if (dt(year=1948, month=5, day=2) <= self.birthday < dt(year=1951, month=9, day=8)) and (
-                self.birthday.hour is not None
-            ):
-                self.birthday = dt(
-                    year=self.birthday.year,
-                    month=self.birthday.month,
-                    day=self.birthday.day,
-                    hour=self.birthday.hour - 1,
-                    minute=self.birthday.minute,
-                )
-
-        except IndexError:
-            try:
-                b = args[1]
-                self.sex = int(args[2])
-                self.birthday = dt.strptime(b, "%Y-%m-%d")
-                self.t_flag = False
-
-            except IndexError:
-                print("引数の指定を確認してください。")
-                exit()
+            self.birthday = dt(
+                year=self.birthdate.year,
+                month=self.birthdate.month,
+                day=self.birthdate.day,
+                hour=self.birthtime.hour - 1,
+                minute=self.birthtime.minute,
+            )
+        else:
+            self.t_flag = False
+            self.birthday = dt(
+                year=self.birthdate.year,
+                month=self.birthdate.month,
+                day=self.birthdate.day,
+                hour=0,
+                minute=0,
+            )
 
         # クラス変数を初期化する
         self.meishiki = {}
-        self.analysis = {}
 
         # std_num は、天干・蔵干を通算した場合の干の番号
         # 通常は、日干：２、月支蔵干５を指定する
         # 日干と月支蔵干が同じ場合は、時支天干：３、年支天干：０などを指定する
-        self.std_num = std_num
+        self.std_num = 2
 
     def is_setsuiri(self, month):
 
@@ -162,7 +153,11 @@ class Meishiki:
         for i in range(len(time_span) - 1):
 
             from_dt = dt(
-                year=self.birthday.year, month=self.birthday.month, day=self.birthday.day, hour=time_span[i], minute=0
+                year=self.birthday.year,
+                month=self.birthday.month,
+                day=self.birthday.day,
+                hour=time_span[i],
+                minute=0,
             )
             if (i == 0) or (i == len(time_span)):
                 to_dt = from_dt + td(hours=0, minutes=59)
@@ -719,6 +714,38 @@ class Meishiki:
             else:
                 print("| " + zokan[0] + "（" + tsuhen[4] + "） ", end="")
             print("|")
+
+    def return_null_when_time_flag_is_false(self, table):
+        if self.t_flag:
+            return table
+        else:
+            for item in table:
+                item["hour"] = None
+
+            return table
+
+    def get_meishiki_table(self):
+        tenkan = [kd.kan[i] for i in self.meishiki["tenkan"]]
+        chishi = [kd.shi[i] for i in self.meishiki["chishi"]]
+        zokan = [kd.kan[i] for i in self.meishiki["zokan"]]
+        tsuhen = [kd.tsuhen[i] for i in self.meishiki["tsuhen"]]
+        twelve_fortune = [kd.twelve_fortune[i] for i in self.meishiki["twelve_fortune"]]
+
+        table = {
+            "tenkan": {"hour": tenkan[3], "day": tenkan[2], "month": tenkan[1], "year": tenkan[0]},
+            "chishi": {"hour": chishi[3], "day": chishi[2], "month": chishi[1], "year": chishi[0]},
+            "tenkanTsuhen": {"hour": tsuhen[3], "month": tsuhen[1], "year": tsuhen[0]},
+            "juniun": {
+                "hour": twelve_fortune[3],
+                "day": twelve_fortune[2],
+                "month": twelve_fortune[1],
+                "year": twelve_fortune[0],
+            },
+            "zoukan": {"hour": zokan[3], "day": zokan[2], "month": zokan[1], "year": zokan[0]},
+            "zoukanTsuhen": {"hour": tsuhen[7], "day": tsuhen[6], "month": tsuhen[5], "year": tsuhen[4]},
+        }
+
+        return self.return_null_when_time_flag_is_false(table)
 
     def show_additional_info(self, flag):
 
